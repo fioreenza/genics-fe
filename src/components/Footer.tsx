@@ -6,18 +6,12 @@ export default function Footer() {
     return (
         <footer className="bg-[#EDF2FF] px-6 py-12 sm:px-20 lg:px-24">
             <div className="mx-auto flex flex-col space-y-8 md:space-y-0 md:flex-row md:space-x-12 lg:space-x-24">
-                <div>
+                <div className="w-96">
                     <Typography as="h3" variant="h6" className="text-black">
                         ConsultITS
                     </Typography>
                     <Typography className="mt-4 text-gray-600">
-                        Lorem Ipsum dolor sit amet lorem ipsum dolor sit amet
-                    </Typography>
-                    <Typography className="text-gray-600">
-                        Lorem Ipsum dolor sit amet lorem ipsum dolor sit amet
-                    </Typography>
-                    <Typography className="text-gray-600">
-                        Lorem Ipsum dolor sit amet lorem ipsum dolor sit amet
+                        ConsultITS adalah platform konsultasi kesahatan yang membantu Anda untuk berkonsultasi dengan dokter secara online.
                     </Typography>
                 </div>
 
@@ -26,7 +20,7 @@ export default function Footer() {
                         Quick Links
                     </Typography>
                     <ul className="mt-4 space-y-2">
-                        {["Beranda", "Konsultasi", "Learning Path", "Forum"].map((text, index) => (
+                        {["Beranda", "Konsultasi", "Learning", "Forum"].map((text, index) => (
                             <li key={index}>
                                 <Link href={`/${text.toLowerCase().replace(' ', '')}`} passHref>
                                     <Typography className="text-gray-600 hover:text-blue-500 transition">

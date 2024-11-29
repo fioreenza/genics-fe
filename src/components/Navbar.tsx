@@ -36,7 +36,7 @@ export default function Navbar({ className = "" }) {
     const links = [
         { href: "/", text: "Beranda" },
         { href: "/konsultasi", text: "Konsultasi" },
-        { href: "/learningpath", text: "Learning Path" },
+        { href: "/learning", text: "Learning Path" },
         { href: "/forum", text: "Forum" },
     ];
 

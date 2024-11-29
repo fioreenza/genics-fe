@@ -19,7 +19,7 @@ function PathCard({
   pathId,
 }: PathCardProps) {
   return (
-    <div className="w-[381px] h-[473px] rounded-[10px] border border-normal flex flex-col gap-4 justify-center items-center px-6">
+    <div className="w-full h-full py-8  rounded-[10px] border border-normal flex flex-col gap-4 justify-center items-center px-6">
       <NextImage
         src={imageSrc}
         alt={title}

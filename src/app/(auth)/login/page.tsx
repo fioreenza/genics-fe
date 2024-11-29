@@ -91,7 +91,7 @@ export default function Login() {
       <div className="bg-white rounded-2xl w-full h-full flex">
         <div className="w-full px-8 lg:w-3/5 p-12 lg:px-20 h-full justify-center flex flex-col space-y-3">
           <Typography variant="h5" weight="medium">
-            Masuk ke <span className="text-[#458FF6]">X</span>
+            Masuk ke <span className="text-[#458FF6]">ConsultIT</span>
           </Typography>
           <form onSubmit={handleSubmit}>
             <InputWithIcon

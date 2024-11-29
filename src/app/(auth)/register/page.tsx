@@ -98,7 +98,7 @@ export default function Register() {
         </div>
         <div className="w-full px-8 lg:w-3/5 p-12 lg:px-20 h-full justify-center flex flex-col space-y-3">
           <Typography variant="h5" weight="medium">
-            Daftar ke <span className="text-[#458FF6]">X</span>
+            Daftar ke <span className="text-[#458FF6]">ConsultIT</span>
           </Typography>
           <form onSubmit={handleSubmit}>
             <InputWithIcon

@@ -13,18 +13,24 @@ import { Dialog } from "@headlessui/react";
 interface Order {
   user: {
     name: string;
+    id: number;
   };
   doctor: {
     name: string;
+    id: number;
   };
   id: number;
-  date: string;
+  createdAt: string;
   status: string;
+  expiresAt: string;
+  zoomLink?: string;
+  updatedAt: string;
 }
 
 export default function MyOrderPage() {
   const isLoggedIn = useCheckLogin();
   const router = useRouter();
+
 
   if (!isLoggedIn) {
     router.push("/login");
@@ -59,6 +65,11 @@ export default function MyOrderPage() {
     }
   };
 
+  const generateZoomLink = (orderId: number): string => {
+    return `https://zoom.us/j/${orderId.toString().padStart(10, "0")}`;
+  };
+
+  
   const updateOrderStatus = async (orderId: number, newStatus: string) => {
     const token = localStorage.getItem("token");
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
@@ -104,7 +115,11 @@ export default function MyOrderPage() {
 
         if (response.ok) {
           const { data } = await response.json();
-          setOrders(data.reservations); 
+          const enhancedOrders = data.reservations.map((order: Order) => ({
+            ...order,
+            zoomLink: order.zoomLink || generateZoomLink(order.id),
+          }));
+          setOrders(enhancedOrders);
           setRole(role);
         } else {
           console.error("Failed to fetch orders.");
@@ -119,10 +134,59 @@ export default function MyOrderPage() {
     fetchOrders();
   }, []);
 
+  const createPayment = async (orderId: number) => {
+    const token = localStorage.getItem("token");
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  
+    const order = orders.find((o) => o.id === orderId);
+    if (!order || !order.doctor) {
+      toast.error("Doctor information is missing for this order.");
+      return;
+    }
+  
+    try {
+      const response = await fetch(`${baseUrl}/payment`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: orderId,
+          userId: order.user.id,
+          doctorId: order.doctor.id, 
+          date: order.createdAt,
+          status: order.status,
+          expiresAt: order.expiresAt
+        }),
+      });
+  
+      if (response.ok) {
+        toast.success("Payment created successfully.");
+        const data = await response.json();
+      console.log("Payment response:", data);
+      } else {
+        toast.error("Failed to create payment.");
+      }
+    } catch (error) {
+      console.error("An error occurred while creating payment:", error);
+      toast.error("An error occurred while creating payment.");
+    }
+  };
+  
   const handleOpenDialog = (orderId: number) => {
     setSelectedOrderId(orderId);
     setIsDialogOpen(true);
   };
+
+  const orderDetails = orders.find(order => order.id === selectedOrderId);
+
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  const handlePopUp = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    setIsModalOpen(true);
+  }
 
   const handleCancelOrder = () => {
     if (selectedOrderId !== null) {
@@ -151,9 +215,9 @@ export default function MyOrderPage() {
         </Typography>
 
         {loading ? (
-          <div className="flex justify-center items-center">
-            <Typography variant="h6">Loading...</Typography>
-          </div>
+              <div className="flex justify-center items-center h-screen">
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+              </div>
         ) : orders.length === 0 ? (
           <div className="flex justify-center items-center">
             <Typography variant="h6">No orders found.</Typography>
@@ -171,7 +235,7 @@ export default function MyOrderPage() {
                       Patient: {order.user.name}
                     </Typography>
                     <Typography variant="bl" className="mb-2">
-                      Date: {new Date(order.date).toLocaleDateString()}
+                      Date: {new Date(order.createdAt).toLocaleString()}
                     </Typography>
                     <Typography variant="bl" className="mb-4">
                       Status: <span
@@ -210,7 +274,7 @@ export default function MyOrderPage() {
                         size="small"
                         className="bg-blue-500 border-none"
                       >
-                        Lihat Detail
+                        Riwayat Transaksi
                       </ButtonNoLink>
                     ) : null}
                   </div>
@@ -224,7 +288,7 @@ export default function MyOrderPage() {
                     {order.doctor.name}
                   </Typography>
                   <Typography variant="bl" className="mb-2">
-                    Date: {new Date(order.date).toLocaleDateString()}
+                    Date: {new Date(order.createdAt).toLocaleString()}
                   </Typography>
                   <Typography variant="bl" className="mb-4" >
                     Status: <span
@@ -242,19 +306,29 @@ export default function MyOrderPage() {
                 </span>
                   </Typography>
                   {order.status === "PENDING" ? (
+                    <div className="flex space-x-2">
                     <ButtonNoLink
                       size="small"
                       className="bg-gray-400 border-none"
-                      onClick={() => handleOpenDialog(order.id)}
+                      onClick = {() => handleOpenDialog(order.id)}
                     >
                       Cancel
                     </ButtonNoLink>
+                    <ButtonNoLink
+                    size="small"
+                    className="bg-blue-500 border-none"
+                    onClick={() => createPayment(order.id)}
+                  >
+                    Transaksi
+                  </ButtonNoLink>
+                  </div>
                   ) : order.status === "ACCEPTED" ? (
                     <ButtonNoLink
                       size="small"
                       className="bg-blue-500 border-none"
+                      onClick={() => handlePopUp(order.id)}
                     >
-                      Lihat Detail
+                        Lihat detail 
                     </ButtonNoLink>
                   ) : null}
                 </div>
@@ -265,7 +339,6 @@ export default function MyOrderPage() {
       </section>
       <Footer />
 
-      {/* Dialog for Confirmation */}
       <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black bg-opacity-30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
@@ -291,6 +364,54 @@ export default function MyOrderPage() {
           </Dialog.Panel>
         </div>
       </Dialog>
+
+
+      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
+  <div className="fixed inset-0 bg-black bg-opacity-30" aria-hidden="true" />
+  <div className="fixed inset-0 flex items-center justify-center p-4">
+    <Dialog.Panel className="bg-white rounded-lg p-6 shadow-lg max-w-md w-full">
+      <Dialog.Title className="text-2xl font-bold mb-4">Detail Order</Dialog.Title>
+      {orderDetails ? (
+        <Dialog.Description className="text-sm mb-6">
+          <Typography variant="bm" className="mb-2">
+            <strong>Doctor Name:</strong> {orderDetails.doctor.name}
+          </Typography>
+          <Typography variant="bm" className="mb-2">
+          <strong>Scheduled Time:{" "}</strong>
+    {new Date(
+      new Date(orderDetails.updatedAt).getTime() + 2 * 60 * 60 * 1000
+    ).toLocaleString()}
+          
+          </Typography>
+          <Typography variant="bm" className="mb-2">
+            <strong>Zoom Link:{" "}</strong>
+            <a href={orderDetails.zoomLink} target="_blank" rel="noopener noreferrer" className="text-blue-500">
+              {orderDetails.zoomLink || "Not Available"}
+            </a>
+          </Typography>
+          <div className="mt-4 text-gray-600">
+    <Typography variant="bm" className="mb-2">
+      🩺 This consultation is part of our commitment to providing accessible healthcare. 
+      If you encounter any issues during the session, feel free to contact our support team.
+    </Typography>
+  </div>
+        </Dialog.Description>
+      ) : (
+        <p className="text-red-500">Unable to fetch order details.</p>
+      )}
+      <div className="flex justify-end gap-4">
+        <button
+          onClick={() => setIsModalOpen(false)}
+          className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded"
+        >
+          Close
+        </button>
+      </div>
+    </Dialog.Panel>
+  </div>
+</Dialog>
+
     </>
   );
 }
+
